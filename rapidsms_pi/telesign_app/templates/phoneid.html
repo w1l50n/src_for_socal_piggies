@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% block title %} PhoneID {% endblock %}
+
+{% block extra_stylesheets %}
+<style type="text/css">
+    html { height: 100% }
+    body { height: 100%; margin: 0; padding: 0 }
+    #map-canvas {
+        width: 800px;
+        height: 600px;
+    }
+    .gm-style img { max-width: none; }
+    .gm-style label { width: auto; display: inline; }
+</style>
+{% endblock %}
+
+{% block extra_javascript %}
+<script type="text/javascript"
+    src="https://maps.googleapis.com/maps/api/js?v=3.exp&key={{ GOOGLE_API_KEY }}&sensor=false&libraries=visualization">
+</script>
+<script>
+    var map, pointarray, heatmap;
+    var taxiData = [
+        {% for lat, lon in lat_lon_list %}
+            new google.maps.LatLng({{ lat }}, {{ lon }}),
+        {% endfor %}
+    ];
+
+    function initialize() {
+        var mapOptions = {
+            zoom: 4,
+            center: new google.maps.LatLng(40, -90),
+            mapTypeId: google.maps.MapTypeId.ROADMAP
+        };
+
+        map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
+
+        var pointArray = new google.maps.MVCArray(taxiData);
+
+        heatmap = new google.maps.visualization.HeatmapLayer({
+            data: pointArray,
+            opacity: 1,
+            radius: 9,
+          });
+        heatmap.setMap(map);
+    }
+
+    google.maps.event.addDomListener(window, 'load', initialize);
+</script>
+
+<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+<script type="text/javascript">
+
+    // Load the Visualization API and the piechart package.
+    google.load('visualization', '1.0', {'packages':['corechart']});
+
+    // Set a callback to run when the Google Visualization API is loaded.
+    google.setOnLoadCallback(function() {
+        drawChart('phone_types');
+    });
+    google.setOnLoadCallback(function() {
+        drawChart('carriers');
+    });
+
+    // Callback that creates and populates a data table,
+    // instantiates the pie chart, passes in the data and
+    // draws it.
+    function drawChart(chat_type) {
+
+        // Create the data table.
+        var data = new google.visualization.DataTable();
+        data.addColumn('string', chat_type);
+        data.addColumn('number', 'count');
+        if (chat_type == 'phone_types'){
+            var title = 'Phone Type';
+            var rows = [
+                {% for phone_type, count in phone_types.iteritems %}
+                    ['{{phone_type}}', {{count}}],
+                {% endfor %}
+            ];
+        } else if (chat_type == 'carriers'){
+            var title = 'carrier';
+            var rows = [
+                {% for carrier, count in carriers.iteritems %}
+                    ['{{carrier|safe}}', {{count}}],
+                {% endfor %}
+            ];
+        }
+        data.addRows(rows);
+
+        // Set chart options
+        var options = {'title': title,
+                       'width': 800,
+                       'height': 400};
+
+        // Instantiate and draw our chart, passing in some options.
+        var chart = new google.visualization.PieChart(document.getElementById(chat_type+'_chart'));
+        chart.draw(data, options);
+      }
+    </script>
+{% endblock %}
+
+{% block content %}
+<div id="map-canvas"></div>
+<div><h4>count: {{ phoneids|length }}</h4></div>
+<div id="phone_types_chart"></div>
+<div id="carriers_chart"></div>
+
+<div>
+    <pre>
+    {u'carrier': {u'name': u'Level 3 Communications, LLC - CA'},
+     u'errors': [],
+     u'location': {u'city': u'Los Angeles',
+      u'coordinates': {u'latitude': 33.99791, u'longitude': -118.42302},
+      u'country': {u'iso2': u'US', u'iso3': u'USA', u'name': u'United States'},
+      u'county': u'Los Angeles',
+      u'metro_code': u'4480',
+      u'state': u'CA',
+      u'time_zone': {u'name': u'America/Los_Angeles',
+       u'utc_offset_max': u'-8',
+       u'utc_offset_min': u'-8'},
+      u'zip': u'90066'},
+     u'numbering': {u'cleansing': {u'call': {u'cleansed_code': 100,
+        u'country_code': u'1',
+        u'max_length': 10,
+        u'min_length': 10,
+        u'phone_number': u'3107409700'},
+       u'sms': {u'cleansed_code': 100,
+        u'country_code': u'1',
+        u'max_length': 10,
+        u'min_length': 10,
+        u'phone_number': u'3107409700'}},
+      u'original': {u'complete_phone_number': u'13107409700',
+       u'country_code': u'1',
+       u'phone_number': u'3107409700'}},
+     u'phone_type': {u'code': u'1', u'description': u'FIXED_LINE'},
+     u'reference_id': u'01408EFB2DBE010BE4D4403C00024AB7',
+     u'resource_uri': None,
+     u'status': {u'code': 300,
+      u'description': u'Transaction successfully completed',
+      u'updated_on': u'2013-08-18T01:12:40.689718Z'},
+     u'sub_resource': u'standard'}
+    </pre>
+</div>
+
+{% endblock %}

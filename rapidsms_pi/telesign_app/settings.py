@@ -1,0 +1,6 @@
+
+TS_CUSTOMER_ID = ""
+TS_SECRET_KEY = ""
+TS_RUN_PHONEID = True
+
+GOOGLE_API_KEY = ""
